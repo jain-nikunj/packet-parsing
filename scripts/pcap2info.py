@@ -1,6 +1,8 @@
 from collections import defaultdict
 import numpy as np
 import sys
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 def get_delivered_load(inputFile, curSrn, dx=1):
@@ -60,32 +62,41 @@ def compute_load_per_dx(dictTime2Load, dx=1):
 
     return curCounts
 
-def plot_log_offered_load(curCounts, name, dx=1):
+def plot_log_offered_load(curCountArr, priorityArr, name, dx=1):
     '''
 
     '''
-    counts = len(curCounts)
-    endPoint = dx * counts
-    timeStamps = np.arange(0, endPoint, dx)
-    plt.plot(timeStamps, curCounts)
+    legs = []
+    for i, curCounts in enumerate(curCountArr):
+        priority = priorityArr[i]
+        counts = len(curCounts)
+        endPoint = dx * counts
+        timeStamps = np.arange(0, endPoint, dx)
+        leg, _ = plt.plot(timeStamps, curCounts, label=priority)
+
+    plt.legend(legs, priorityArr)
     plt.savefig(name+".png")
     plt.clf()
 
 def main():
-    dx, inputFilePcap, outDir = sys.argv[1:4]
+    dx, outDir = sys.argv[1:3]
+    inputFileTxts = sys.argv[3:]
     dx = float(dx)
+    curCountArr = []
+    priorityArr = []
 
-    # INPUT FILENAME IN THE FORMAT srn<num>_<tap0/tr0>.pcap
-    curSrn = int(inputFilePcap.split("_")[0].split("srn")[1])
+    # INPUT FILENAME IN THE FORMAT srn<num>-*-priority.txt
+    for inputFileTxt in inputFileTxts:
+        curSrn = int(inputFileTxt.split("-")[0].split("srn")[1])
+        priority = inputFileTxt.split("-")[-1].split(".")[0]
 
-    dictTime2Load = get_offered_load(inputFilePcap, curSrn, dx)
-    curCounts = compute_load_per_dx(dictTime2Load, dx)
-    plot_log_offered_load(curCounts, outDir + '/offered_srn{}'.format(curSrn), dx)
+        dictTime2Load = get_offered_load(inputFileTxt, curSrn, dx)
+        curCounts = compute_load_per_dx(dictTime2Load, dx)
+        curCountArr.append(curCounts)
+        priorityArr.append(priority)
 
-    dictTime2Load = get_delivered_load(inputFilePcap, curSrn, dx)
-    curCounts = compute_load_per_dx(dictTime2Load, dx)
-    plot_log_offered_load(curCounts, outDir + '/delivered_srn{}'.format(curSrn), dx)
-
+    plot_log_offered_load(curCountArr, priorityArr,
+                          outDir + '/offered_srn{}'.format(curSrn), dx)
 
 if __name__ == '__main__':
     main()
