@@ -16,7 +16,7 @@ def get_delivered_load(inputFile, curSrn, dx=1):
     for line in lines:
         data = line.lstrip().rstrip().split(' ')
         timeStamp, srcIp, _, destIp = data[1:5]
-	byteLen = int(data[6])
+        byteLen = int(data[6])
         timeStamp = round(float(timeStamp), 4)
 
         if destIp:
@@ -37,10 +37,10 @@ def get_offered_load(inputFile, curSrn, dx=1):
 
     for line in lines:
         data = line.lstrip().rstrip().split(' ')
-	data = list(filter(None, data))
+        data = list(filter(None, data))
         timeStamp, srcIp, _, destIp = data[1:5]
         timeStamp = round(float(timeStamp), 4)
-	byteLen = int(data[6])
+        byteLen = int(data[6])
 
         if srcIp:
             if destIp.split('.')[3] != str(1):
@@ -76,7 +76,7 @@ def plot_log_offered_load(curCountArr, priorityArr, name, dx=1):
         endPoint = dx * counts
         timeStamps = np.arange(0, endPoint, dx)
         leg, = plt.plot(timeStamps, curCounts, label=priority)
-	legs.append(leg)
+        legs.append(leg)
 
     plt.legend(legs, priorityArr)
     plt.ylabel('Bytes / Sec')
