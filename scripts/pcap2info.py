@@ -16,13 +16,14 @@ def get_delivered_load(inputFile, curSrn, dx=1):
     for line in lines:
         data = line.lstrip().rstrip().split(' ')
         timeStamp, srcIp, _, destIp = data[1:5]
+	byteLen = int(data[6])
         timeStamp = round(float(timeStamp), 4)
 
         if destIp:
             if srcIp.split('.')[3] != str(1):
                 arr = destIp.split('.')
                 if arr[3] != str(1) and arr[2] == str(curSrn + 100):
-                    dictTime2Load[timeStamp] += 1
+                    dictTime2Load[timeStamp] += byteLen
 
     return dictTime2Load
 
@@ -36,14 +37,16 @@ def get_offered_load(inputFile, curSrn, dx=1):
 
     for line in lines:
         data = line.lstrip().rstrip().split(' ')
+	data = list(filter(None, data))
         timeStamp, srcIp, _, destIp = data[1:5]
         timeStamp = round(float(timeStamp), 4)
+	byteLen = int(data[6])
 
         if srcIp:
             if destIp.split('.')[3] != str(1):
                 arr = srcIp.split('.')
                 if arr[3] != str(1) and arr[2] == str(curSrn + 100):
-                    dictTime2Load[timeStamp] += 1
+                    dictTime2Load[timeStamp] += byteLen
 
     return dictTime2Load
 
@@ -72,9 +75,12 @@ def plot_log_offered_load(curCountArr, priorityArr, name, dx=1):
         counts = len(curCounts)
         endPoint = dx * counts
         timeStamps = np.arange(0, endPoint, dx)
-        leg, _ = plt.plot(timeStamps, curCounts, label=priority)
+        leg, = plt.plot(timeStamps, curCounts, label=priority)
+	legs.append(leg)
 
     plt.legend(legs, priorityArr)
+    plt.ylabel('Bytes / Sec')
+    plt.title("Load averaged over dx={}".format(str(dx)))
     plt.savefig(name+".png")
     plt.clf()
 
@@ -87,13 +93,13 @@ def main():
 
     # INPUT FILENAME IN THE FORMAT srn<num>-*-priority.txt
     for inputFileTxt in inputFileTxts:
-        curSrn = int(inputFileTxt.split("-")[0].split("srn")[1])
-        priority = inputFileTxt.split("-")[-1].split(".")[0]
+            curSrn = int(inputFileTxt.split("-")[0].split("srn")[1])
+            priority = inputFileTxt.split("-")[-1].split(".")[0]
 
-        dictTime2Load = get_offered_load(inputFileTxt, curSrn, dx)
-        curCounts = compute_load_per_dx(dictTime2Load, dx)
-        curCountArr.append(curCounts)
-        priorityArr.append(priority)
+            dictTime2Load = get_offered_load(inputFileTxt, curSrn, dx)
+            curCounts = compute_load_per_dx(dictTime2Load, dx)
+            curCountArr.append(curCounts)
+            priorityArr.append(priority)
 
     plot_log_offered_load(curCountArr, priorityArr,
                           outDir + '/offered_srn{}'.format(curSrn), dx)
